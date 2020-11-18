@@ -1,5 +1,5 @@
 # che version to release
-CHE_VERSION=7.21.2
+CHE_VERSION=7.22.0
 # if true, release and deploy che parent
 RELEASE_CHE_PARENT=false
 # if true, automatically release che-server on Nexus. If false, must be released manually on Nexus interface 
