@@ -12,6 +12,8 @@ loadJenkinsVars() {
                               CHE_NPM_AUTH_TOKEN \
                               CHE_OSS_SONATYPE_GPG_KEY \
                               CHE_OSS_SONATYPE_PASSPHRASE \
+                              RH_CHE_AUTOMATION_DOCKERHUB_USERNAME \
+                              RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD \
                               QUAY_ECLIPSE_CHE_USERNAME \
                               QUAY_ECLIPSE_CHE_PASSWORD \
                               QUAY_ECLIPSE_CHE_OPERATOR_KUBERNETES_USERNAME \
@@ -319,6 +321,12 @@ loginQuay() {
         echo "Could not login, missing credentials for pushing to the '${ORGANIZATION}' organization"
         die_with  "failed to login on Quay!"
     fi
+
+    if [ -n "${RH_CHE_AUTOMATION_DOCKERHUB_USERNAME}" ] && [ -n "${RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD}" ]; then
+        docker login -u "${RH_CHE_AUTOMATION_DOCKERHUB_USERNAME}" -p "${RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD}"
+    else
+        echo "Could not login, missing credentials for pushing to the docker.io"
+    fi
 }
 
 pushImagesOnQuay() {
@@ -480,7 +488,7 @@ loginQuay
 #  { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-theia            devtools-che-theia-che-release        90 & }; pid_1=$!;
 #  { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-machine-exec     devtools-che-machine-exec-release     60 & }; pid_2=$!;
 #  { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-devfile-registry devtools-che-devfile-registry-release 75 & }; pid_3=$!;
-wait
+# wait
 # # then release plugin-registry (depends on che-theia and machine-exec)
 
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-machine-exec:${CHE_VERSION} 5
@@ -489,8 +497,8 @@ verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-theia-dev:${CHE
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-theia:${CHE_VERSION} 5
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-theia-endpoint-runtime-binary:${CHE_VERSION} 5
 
- { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-plugin-registry  devtools-che-plugin-registry-release  45 & }; pid_4=$!;
-wait
+#  { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-plugin-registry  devtools-che-plugin-registry-release  45 & }; pid_4=$!;
+# wait
 
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-plugin-registry:${CHE_VERSION} 5
 
