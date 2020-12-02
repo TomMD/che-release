@@ -114,6 +114,7 @@ evaluateCheVariables() {
     echo "Release che-parent: ${RELEASE_CHE_PARENT}"
     echo "Version che-parent: ${VERSION_CHE_PARENT}"
     echo "Autorelease on nexus: ${AUTORELEASE_ON_NEXUS}"
+    echo "Release Process Phases: '${PHASES}'"
 }
 
 releaseCheDocs() {
@@ -486,9 +487,12 @@ set -e
 loginQuay
 
 # Release che-theia, machine-exec and devfile-registry
-{ ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-theia            devtools-che-theia-che-release        90 & }; pid_1=$!;
-{ ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-machine-exec     devtools-che-machine-exec-release     60 & }; pid_2=$!;
-{ ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-devfile-registry devtools-che-devfile-registry-release 75 & }; pid_3=$!;
+
+if [[ ${PHASES} == *"1"* ]]; then
+    { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-theia            devtools-che-theia-che-release        90 & }; pid_1=$!;
+    { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-machine-exec     devtools-che-machine-exec-release     60 & }; pid_2=$!;
+    { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-devfile-registry devtools-che-devfile-registry-release 75 & }; pid_3=$!;
+fi
 wait
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-machine-exec:${CHE_VERSION} 30
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-devfile-registry:${CHE_VERSION} 30
@@ -497,35 +501,52 @@ verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-theia:${CHE_VER
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-theia-endpoint-runtime-binary:${CHE_VERSION} 30
 
 # Release plugin-registry (depends on che-theia and machine-exec)
-{ ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-plugin-registry  devtools-che-plugin-registry-release  45 & }; pid_4=$!;
+if [[ ${PHASES} == *"2"* ]]; then
+    { ./cico_release_theia_and_registries.sh ${CHE_VERSION} eclipse/che-plugin-registry  devtools-che-plugin-registry-release  45 & }; pid_4=$!;
+fi
 wait
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-plugin-registry:${CHE_VERSION} 30
 
 # Release dashboard and workspace loader
-releaseDashboard
-releaseWorkspaceLoader
+if [[ ${PHASES} == *"3"* ]]; then
+    releaseDashboard
+    releaseWorkspaceLoader
+fi
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-dashboard:${CHE_VERSION} 30
 verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-workspace-loader:${CHE_VERSION} 30
 
-# release of che should start only when all necessary release images are available on Quay (depends on dashboard and workspace loader)
-checkoutProjects
-prepareRelease
-createTags
+# Release of Che docs does not depend on server, so trigger and don't wait
+if [[ ${PHASES} == *"4"* ]]; then
+    releaseCheDocs &
+fi
 
-# Release of Che docs does not depend on server, so trigger it and don't wait
-releaseCheDocs &
+# Release Che server to Maven central (depends on dashboard and workspace loader)
+if [[ ${PHASES} == *"5"* ]]; then
+    checkoutProjects
+    prepareRelease
+    createTags
+    releaseCheServer
+fi
 
-# Release Che server (depends on dashboard and workspace loader)
-releaseCheServer
+# Release Che images - see DOCKER_FILES_LOCATIONS for array of images to build
+if [[ ${PHASES} == *"6"* ]]; then
+    buildImages  ${CHE_VERSION}
+    tagLatestImages ${CHE_VERSION}
+    pushImagesOnQuay ${CHE_VERSION} pushLatest
+    bumpVersions
+    updateImageTagsInCheServer
+fi
+# verify images all created from IMAGES_LIST
+for image in ${IMAGES_LIST[@]}; do
+    verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/${image}:${CHE_VERSION} 30
+done
 
-buildImages  ${CHE_VERSION}
-tagLatestImages ${CHE_VERSION}
-pushImagesOnQuay ${CHE_VERSION} pushLatest
+# Release Che operator (create PRs)
+if [[ ${PHASES} == *"7"* ]]; then
+    releaseOperator
+fi
 
-bumpVersions
-updateImageTagsInCheServer
+# TODO need a test to validate docs have been published OK
+wait
 
-verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/che-server:${CHE_VERSION} 5
-
-# finally, release Che operator (create PRs)
-releaseOperator
+# Next steps documented in https://github.com/eclipse/che-release/blob/master/README.md#phase-2---manual-steps
