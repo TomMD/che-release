@@ -1,0 +1,25 @@
+# list images to copy to quay.io/eclipse/che-*, 1 per line
+# lines starting with # will be ignored 
+# see copyImagesToQuay.sh for skopeo copy script
+
+docker.io/centos/mongodb-36-centos7
+docker.io/centos/mysql-57-centos7
+# registries use :latest, operator csv uses :9.6
+docker.io/centos/postgresql-96-centos7
+docker.io/centos/postgresql-96-centos7:9.6
+docker.io/traefik:v2.2.8
+
+# TODO: convince upstream owner to publish to quay.io instead; see https://github.com/eclipse/che-plugin-registry/pull/706
+# docker.io/dirigiblelabs/dirigible-openshift:3.4.0
+# docker.io/ksmster/che-editor-jupyter:5.7.0
+# docker.io/wsskeleton/eclipse-broadway
+
+# chinodesuuu/coder has moved 
+# docker.io/chinodesuuu/coder:2.1523-vsc1.38.1-che
+# docker.io/chinodesuuu/coder:2.1650-vsc1.39.2-che
+# docker.io/chinodesuuu/coder:next
+# TODO: convince upstream owner to publish to quay.io instead; see https://github.com/eclipse/che-plugin-registry/pull/706
+# docker.io/codercom/code-server:3.6.2
+
+# moved to quay.io/windupeng/mta-vscode-extension:latest
+# docker.io/windup3/rhamt-vscode-extension:java8 

@@ -1,6 +1,8 @@
 # che version to release
-CHE_VERSION=7.22.1
+CHE_VERSION=7.22.2
 # if true, release and deploy che parent
 RELEASE_CHE_PARENT=false
+# version of Che parent to use in maven builds
+VERSION_CHE_PARENT=7.15.0
 # if true, automatically release che-server on Nexus. If false, must be released manually on Nexus interface 
 AUTORELEASE_ON_NEXUS=true
