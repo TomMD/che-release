@@ -315,18 +315,19 @@ tagLatestImages() {
      done
 }
 
-loginQuay() {
+loginToRegistries() {
     if [[ -n "${QUAY_ECLIPSE_CHE_USERNAME}" ]] && [[ -n "${QUAY_ECLIPSE_CHE_PASSWORD}" ]]; then
-        docker login -u "${QUAY_ECLIPSE_CHE_USERNAME}" -p "${QUAY_ECLIPSE_CHE_PASSWORD}" "${REGISTRY}"
+        echo "${QUAY_ECLIPSE_CHE_PASSWORD}" | docker login -u "${QUAY_ECLIPSE_CHE_USERNAME}" --password-stdin "${REGISTRY}"
     else
-        echo "Could not login, missing credentials for pushing to the '${ORGANIZATION}' organization"
-        die_with  "failed to login on Quay!"
+        echo "Could not login, missing credentials for ${REGISTRY}/${ORGANIZATION}"
+        die_with  "failed to login to ${REGISTRY}!"
     fi
 
     if [ -n "${RH_CHE_AUTOMATION_DOCKERHUB_USERNAME}" ] && [ -n "${RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD}" ]; then
-        docker login -u "${RH_CHE_AUTOMATION_DOCKERHUB_USERNAME}" -p "${RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD}"
+        echo "${RH_CHE_AUTOMATION_DOCKERHUB_PASSWORD}" | docker login -u "${RH_CHE_AUTOMATION_DOCKERHUB_USERNAME}" --password-stdin docker.io
     else
-        echo "Could not login, missing credentials for pushing to the docker.io"
+        echo "Could not login, missing credentials for docker.io"
+        die_with  "failed to login to docker.io!"
     fi
 }
 
@@ -484,7 +485,7 @@ evaluateCheVariables
 
 set -e
 
-loginQuay
+loginToRegistries
 
 # Release che-theia, machine-exec and devfile-registry
 
