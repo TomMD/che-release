@@ -7,4 +7,4 @@ VERSION_CHE_PARENT=7.15.0
 # if true, automatically release che-server on Nexus. If false, must be released manually on Nexus interface 
 AUTORELEASE_ON_NEXUS=true
 # list of space-separated phases to perform; default should be " 1 2 3 4 5 6 7 "
-PHASES=" 3 4 5 6 7 "
+PHASES=" 7 "

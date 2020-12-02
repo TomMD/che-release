@@ -539,7 +539,7 @@ if [[ ${PHASES} == *"6"* ]]; then
 fi
 # verify images all created from IMAGES_LIST
 for image in ${IMAGES_LIST[@]}; do
-    verifyContainerExistsWithTimeout ${REGISTRY}/${ORGANIZATION}/${image}:${CHE_VERSION} 30
+    verifyContainerExistsWithTimeout ${image}:${CHE_VERSION} 30
 done
 
 # Release Che operator (create PRs)
